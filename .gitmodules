@@ -1,0 +1,9 @@
+[submodule "libopencm3"]
+	path = libopencm3
+	url = git@github.com:libopencm3/libopencm3.git
+[submodule "FreeRTOS-Kernel"]
+	path = FreeRTOS-Kernel
+	url = git@github.com:FreeRTOS/FreeRTOS-Kernel.git
+[submodule "wasm-micro-runtime"]
+	path = wasm-micro-runtime
+	url = git@github.com:wallento/wasm-micro-runtime.git
