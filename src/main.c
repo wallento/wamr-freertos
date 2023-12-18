@@ -47,7 +47,7 @@ unsigned char __aligned(4) wasm_test_file_interp[] = {
     0x20, 0x62, 0x75, 0x66, 0x20, 0x66, 0x61, 0x69, 0x6C, 0x65, 0x64, 0x00
 };
 
-void *
+void
 iwasm_main(void *arg)
 {
     (void)arg; /* unused */
@@ -75,9 +75,53 @@ iwasm_main(void *arg)
     /* initialize runtime environment */
     if (!wasm_runtime_full_init(&init_args)) {
         printf("Init runtime failed.\n");
-        return NULL;
+        goto end;
     }
 
+    printf("Run wamr with interpreter\n");
+
+    wasm_file_buf = (uint8_t *)wasm_test_file_interp;
+    wasm_file_buf_size = sizeof(wasm_test_file_interp);
+
+    /* load WASM module */
+    if (!(wasm_module = wasm_runtime_load(wasm_file_buf, wasm_file_buf_size,
+                                          error_buf, sizeof(error_buf)))) {
+        printf("Error in wasm_runtime_load: %s\n", error_buf);
+        goto fail1interp;
+    }
+
+    printf("Instantiate WASM runtime\n");
+    if (!(wasm_module_inst =
+              wasm_runtime_instantiate(wasm_module, 32 * 1024, // stack size
+                                       32 * 1024,              // heap size
+                                       error_buf, sizeof(error_buf)))) {
+        printf("Error while instantiating: %s\n", error_buf);
+        goto fail2interp;
+    }
+
+    printf("run main() of the application\n");
+
+    const char *exception;
+    wasm_application_execute_main(wasm_module_inst, 0, NULL);
+    if ((exception = wasm_runtime_get_exception(wasm_module_inst))) {
+        printf("%s\n", exception);
+    }
+
+    /* destroy the module instance */
+    printf("Deinstantiate WASM runtime\n");
+    wasm_runtime_deinstantiate(wasm_module_inst);
+
+fail2interp:
+    /* unload the module */
+    printf("Unload WASM module\n");
+    wasm_runtime_unload(wasm_module);
+
+fail1interp:
+    /* destroy runtime environment */
+    printf("Destroy WASM runtime\n");
+    wasm_runtime_destroy();
+
+end:
     for (;;) {}
 }
 
@@ -89,8 +133,7 @@ int main(void)
 
     TaskHandle_t xHandle = NULL;
 
-    xTaskCreate(iwasm_main, "main", configMINIMAL_STACK_SIZE, NULL, configMAX_PRIORITIES - 1, &xHandle);
-    printf("%p\n", xHandle);
+    xTaskCreate(iwasm_main, "main", 2048, NULL, configMAX_PRIORITIES - 1, &xHandle);
 
     vTaskStartScheduler();
 
