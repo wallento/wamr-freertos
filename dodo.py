@@ -15,6 +15,7 @@ def task_configure():
         'task_dep': ['ensurebuild'],
         'targets': ['build/build.ninja'],
         'actions': [CmdAction('cmake -G Ninja ..', cwd="build")],
+        'uptodate': [False],
     }
 
 def task_build():
@@ -22,6 +23,7 @@ def task_build():
         'targets': ['build/freertos-wamr'],
         'file_dep': ['build/build.ninja'],
         'actions': [CmdAction('ninja', cwd="build")],
+        'uptodate': [False],
     }
 
 def task_simulate():

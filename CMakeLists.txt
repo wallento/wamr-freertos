@@ -61,5 +61,7 @@ target_sources(freertos-wamr PRIVATE src/init.c ${OPENCM3LIB})
 
 target_link_libraries(freertos-wamr PUBLIC ${OPENCM3LIB})
 target_link_libraries(freertos-wamr PUBLIC freertos_kernel freertos_config freertos_kernel_port)
+target_link_libraries(freertos-wamr PUBLIC iwasm_static)
+target_link_libraries(freertos-wamr PUBLIC m)
 target_link_options(freertos-wamr PUBLIC -g ${machine_flags} -nostartfiles -fno-common)
 target_link_options(freertos-wamr PUBLIC -T ${CMAKE_CURRENT_LIST_DIR}/buildfiles/device.ld)
