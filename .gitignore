@@ -1,0 +1,4 @@
+build
+.doit.db
+__pycache__
+.vscode

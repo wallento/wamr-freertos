@@ -5,4 +5,4 @@ MEMORY
     ccmram (rw) : ORIGIN = 0x10000000, LENGTH = 64K
 }
 
-INCLUDE ../libopencm3/lib/cortex-m-generic.ld
+INCLUDE ../third_party/libopencm3/libopencm3/lib/cortex-m-generic.ld

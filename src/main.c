@@ -47,8 +47,7 @@ unsigned char __aligned(4) wasm_test_file_interp[] = {
     0x20, 0x62, 0x75, 0x66, 0x20, 0x66, 0x61, 0x69, 0x6C, 0x65, 0x64, 0x00
 };
 
-void
-iwasm_main(void *arg)
+void iwasm_main(void *arg)
 {
     (void)arg; /* unused */
     /* setup variables for instantiating and running the wasm module */

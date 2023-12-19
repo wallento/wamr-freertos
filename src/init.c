@@ -10,6 +10,8 @@
 #include <libopencm3/cm3/tpiu.h>
 #include <libopencm3/cm3/itm.h>
 
+#include "init.h"
+
 /*
  * To implement the STDIO functions you need to create
  * the _read and _write functions and hook them to the
@@ -40,11 +42,12 @@ static void clock_setup(void)
 	rcc_periph_clock_enable(RCC_AHB1ENR);
 	rcc_periph_clock_enable(RCC_AHB2ENR);
 
-	/* Enable GPIOD clock for LED & USARTs. */
-	rcc_periph_clock_enable(RCC_GPIOD);
+	/* Enable GPIOD    m
+ clock for LED & USARTs. */
+	rcc_periph_clock_enable(USART_GPIO_RCC);
 
-	/* Enable clocks for USART3. */
-	rcc_periph_clock_enable(RCC_USART3);
+	/* Enable clocks for USART. */
+	rcc_periph_clock_enable(USART_RCC);
 	return;
 }
 
@@ -66,25 +69,25 @@ static void trace_setup(void)
 
 static void usart_setup(void)
 {
-	/* Setup USART3 parameters. */
-	usart_set_baudrate(USART3, 115200);
-	usart_set_databits(USART3, 8);
-	usart_set_stopbits(USART3, USART_STOPBITS_1);
-	usart_set_mode(USART3, USART_MODE_TX);
-	usart_set_parity(USART3, USART_PARITY_NONE);
-	usart_set_flow_control(USART3, USART_FLOWCONTROL_NONE);
+	/* Setup USART parameters. */
+	usart_set_baudrate(USART, 115200);
+	usart_set_databits(USART, 8);
+	usart_set_stopbits(USART, USART_STOPBITS_1);
+	usart_set_mode(USART, USART_MODE_TX);
+	usart_set_parity(USART, USART_PARITY_NONE);
+	usart_set_flow_control(USART, USART_FLOWCONTROL_NONE);
 
 	/* Finally enable the USART. */
-	usart_enable(USART3);
+	usart_enable(USART);
 }
 
 static void gpio_setup(void)
 {
-	/* Setup GPIO pins for USART3 transmit. */
-	gpio_mode_setup(GPIOD, GPIO_MODE_AF, GPIO_PUPD_PULLUP, GPIO8 | GPIO9);
+	/* Setup GPIO pins for USART transmit. */
+	gpio_mode_setup(USART_PORT, GPIO_MODE_AF, GPIO_PUPD_PULLUP, USART_PINS);
 
-	/* Setup USART3 TX pin as alternate function. */
-	gpio_set_af(GPIOD, GPIO_AF7, GPIO8 | GPIO9);
+	/* Setup USART TX pin as alternate function. */
+	gpio_set_af(USART_PORT, USART_AF, USART_PINS);
 }
 
 static void trace_send_blocking(char c)
@@ -95,21 +98,20 @@ static void trace_send_blocking(char c)
 	ITM_STIM8(0) = c;
 }
 
-int init(void)
+void init(void)
 {
 	clock_setup();
 	gpio_setup();
 	usart_setup();
-	return 0;
 }
 
 /* back up the cursor one space */
 static inline void back_up(void)
 {
 	end_ndx = dec_ndx(end_ndx);
-	usart_send_blocking(USART3, '\010');
-	usart_send_blocking(USART3, ' ');
-	usart_send_blocking(USART3, '\010');
+	usart_send_blocking(USART, '\010');
+	usart_send_blocking(USART, ' ');
+	usart_send_blocking(USART, '\010');
 }
 
 /*
@@ -125,14 +127,14 @@ void get_buffered_line(void)
 	}
 	while (1)
 	{
-		c = usart_recv_blocking(USART3);
+		c = usart_recv_blocking(USART);
 		if (c == '\r')
 		{
 			buf[end_ndx] = '\n';
 			end_ndx = inc_ndx(end_ndx);
 			buf[end_ndx] = '\0';
-			usart_send_blocking(USART3, '\r');
-			usart_send_blocking(USART3, '\n');
+			usart_send_blocking(USART, '\r');
+			usart_send_blocking(USART, '\n');
 			return;
 		}
 		/* ^H or DEL erase a character */
@@ -140,7 +142,7 @@ void get_buffered_line(void)
 		{
 			if (buf_len == 0)
 			{
-				usart_send_blocking(USART3, '\a');
+				usart_send_blocking(USART, '\a');
 			}
 			else
 			{
@@ -169,13 +171,13 @@ void get_buffered_line(void)
 		{
 			if (buf_len == (BUFLEN - 1))
 			{
-				usart_send_blocking(USART3, '\a');
+				usart_send_blocking(USART, '\a');
 			}
 			else
 			{
 				buf[end_ndx] = c;
 				end_ndx = inc_ndx(end_ndx);
-				usart_send_blocking(USART3, c);
+				usart_send_blocking(USART, c);
 			}
 		}
 	}
@@ -200,10 +202,10 @@ int _write(int fd, char *ptr, int len)
 	}
 	while (*ptr && (i < len))
 	{
-		usart_send_blocking(USART3, *ptr);
+		usart_send_blocking(USART, *ptr);
 		if (*ptr == '\n')
 		{
-			usart_send_blocking(USART3, '\r');
+			usart_send_blocking(USART, '\r');
 		}
 		i++;
 		ptr++;
