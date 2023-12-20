@@ -56,7 +56,6 @@ void iwasm_main(void *arg)
     wasm_module_t wasm_module = NULL;
     wasm_module_inst_t wasm_module_inst = NULL;
     char error_buf[128];
-    void *ret;
     RuntimeInitArgs init_args;
 
     /* configure memory allocation */
@@ -67,7 +66,7 @@ void iwasm_main(void *arg)
     init_args.mem_alloc_option.allocator.realloc_func = (void *)realloc;
     init_args.mem_alloc_option.allocator.free_func = (void *)free;
 #else
-#error The usage of a global heap pool is not implemented yet for esp-idf.
+#error The usage of a global heap pool is not implemented yet for freertos.
 #endif
 
     printf("Initialize WASM runtime\n");
@@ -106,17 +105,14 @@ void iwasm_main(void *arg)
         printf("%s\n", exception);
     }
 
-    /* destroy the module instance */
     printf("Deinstantiate WASM runtime\n");
     wasm_runtime_deinstantiate(wasm_module_inst);
 
 fail2interp:
-    /* unload the module */
     printf("Unload WASM module\n");
     wasm_runtime_unload(wasm_module);
 
 fail1interp:
-    /* destroy runtime environment */
     printf("Destroy WASM runtime\n");
     wasm_runtime_destroy();
 
